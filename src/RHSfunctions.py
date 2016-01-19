@@ -10,7 +10,7 @@ def RHS_DNS(main):
     ureal = myifft(uhat_pad)*2*np.sqrt(size(main.uhat))
     c = unpad_r(myfft(ureal*ureal)/(2*np.sqrt(size(main.uhat))),1)
     main.RHS = -0.5*1j*main.k*c - main.nu*main.k**2*main.uhat
-    #main.tauhat = main.computeSGS(main.uhat,main.kc)
+    main.tauhat = main.computeSGS(main.uhat,main.kc)
     main.u = myifft(main.uhat)*sqrt(N)
  
 
@@ -32,7 +32,9 @@ def RHS_tmodel(main):
     c_FUG = myfft(ureal*ureal)/(2.*sqrt(N))
     PLu_FUG = -0.5*1j*kf*c_FUG - main.nu*kf**2*uhat_pad
     ## Separate into modes in F and modes in G
-    PLu_F,PLu_G = splitModes(PLu_FUG,main.kc)
+#    PLu_F,PLu_G = splitModes(PLu_FUG,main.kc)
+    PLu_F,PLu_G = splitModes(PLu_FUG,size(main.uhat)-1)
+
     ## Now get pseudo-spectral conv(u,PLu_G)
     PLu_G_real = myifft(PLu_G)*sqrt(N)*2
     uhat_x_PLu_G = unpad_2xr(myfft(ureal*PLu_G_real)/(2.*sqrt(N)),1)
@@ -51,7 +53,8 @@ def RHS_FM1(main):
     c_FUG = myfft(ureal*ureal)/(2.*sqrt(N))
     PLu_FUG = -0.5*1j*kf*c_FUG - main.nu*kf**2*uhat_pad
     ## Separate into modes in F and modes in G
-    PLu_F,PLu_G = splitModes(PLu_FUG,main.kc)
+#    PLu_F,PLu_G = splitModes(PLu_FUG,main.kc)
+    PLu_F,PLu_G = splitModes(PLu_FUG,size(main.uhat)-1)
 
     ## Now get pseudo-spectral conv(u,PLu_G)
     PLu_G_real = myifft(PLu_G)*sqrt(N)*2
@@ -74,14 +77,16 @@ def RHS_FM2(main):
     c_FUG = myfft(ureal*ureal)/(2.*sqrt(N))
     PLu_FUG = -0.5*1j*kf*c_FUG - main.nu*kf**2*uhat_pad
     ## Separate into modes in F and modes in G
-    PLu_F,PLu_G = splitModes(PLu_FUG,main.kc)
+#    PLu_F,PLu_G = splitModes(PLu_FUG,main.kc)
+    PLu_F,PLu_G = splitModes(PLu_FUG,size(main.uhat)-1)
 
     ## Now get pseudo-spectral conv(u,PLu_G)
     PLu_G_real = myifft(PLu_G)*sqrt(N)*2
     uhat_x_PLu_G = myfft(ureal*PLu_G_real)/(2.*sqrt(N))
     ## Now get PLQLu and split the modes 
     PLQLu_FUG = 2.*-1j*kf/2.*uhat_x_PLu_G - kf**2*main.nu*PLu_G
-    PLQLu_F,PLQLu_G = splitModes(PLQLu_FUG,main.kc)
+#    PLQLu_F,PLQLu_G = splitModes(PLQLu_FUG,main.kc)
+    PLQLu_F,PLQLu_G = splitModes(PLQLu_FUG,size(main.uhat)-1)
 
     ## Now get PLPLu and split the modes
     PLu_F_real = myifft(PLu_F)*sqrt(N)*2
@@ -109,20 +114,23 @@ def RHS_FM3(main):
     c_FUG = myfft(ureal*ureal)/(2.*sqrt(N))
     PLu_FUG = -0.5*1j*kf*c_FUG - main.nu*kf**2*uhat_pad
     ## Separate into modes in F and modes in G
-    PLu_F,PLu_G = splitModes(PLu_FUG,main.kc)
+    #PLu_F,PLu_G = splitModes(PLu_FUG,main.kc)
+    PLu_F,PLu_G = splitModes(PLu_FUG,size(main.uhat)-1)
 
     ## Now get pseudo-spectral conv(u,PLu_G)
     PLu_G_real = myifft(PLu_G)*sqrt(N)*2
     uhat_x_PLu_G = myfft(ureal*PLu_G_real)/(2.*sqrt(N))
     ## Now get PLQLu and split the modes 
     PLQLu_FUG = 2.*-1j*kf/2.*uhat_x_PLu_G - kf**2*main.nu*PLu_G
-    PLQLu_F,PLQLu_G = splitModes(PLQLu_FUG,main.kc)
+    #PLQLu_F,PLQLu_G = splitModes(PLQLu_FUG,main.kc)
+    PLQLu_F,PLQLu_G = splitModes(PLQLu_FUG,size(main.uhat)-1)
 
     ## Now get PLPLu and split the modes
     PLu_F_real = myifft(PLu_F)*sqrt(N)*2
     uhat_x_PLu_F = myfft(ureal*PLu_F_real)/(2.*sqrt(N))
     PLPLu_FUG = 2.*-1j*kf/2*uhat_x_PLu_F - kf**2.*main.nu*PLu_F
-    PLPLu_F,PLPLu_G = splitModes(PLPLu_FUG,main.kc)
+#    PLPLu_F,PLPLu_G = splitModes(PLPLu_FUG,main.kc)
+    PLPLu_F,PLPLu_G = splitModes(PLPLu_FUG,size(main.uhat)-1)
 
     ## Now get PLQLQLu
     PLQLu_G_real = myifft(PLQLu_G)*sqrt(N)*2.
@@ -131,7 +139,8 @@ def RHS_FM3(main):
     PLu_G_x_PLu_G =  myfft(PLu_G_real*PLu_G_real)/(2.*sqrt(N))
     PLQLQLu_FUG = 2.*-1j*kf/2.*uhat_x_PLQLu_G + 2.*-1j*kf/2.*PLu_G_x_PLu_F + \
               2.*-1j*kf/2.*PLu_G_x_PLu_G - main.nu*kf**2.*PLQLu_G;
-    PLQLQLu_F,PLQLQLu_G = splitModes(PLQLQLu_FUG,main.kc)
+#    PLQLQLu_F,PLQLQLu_G = splitModes(PLQLQLu_FUG,main.kc)
+    PLQLQLu_F,PLQLQLu_G = splitModes(PLQLQLu_FUG,size(main.uhat)-1)
 
     PLQLQLu_G_real = myifft(PLQLQLu_G)*2.*sqrt(N)
     PLQLu_F_real = myifft(PLQLu_F)*2.*sqrt(N)
@@ -217,3 +226,20 @@ def RHS_CM3(main):
 
     main.tauhat[:] = main.w0hat[:]/(-1j*main.k + 1e-30)
     main.u[:] = myifft(main.uhat)*sqrt(N)
+
+
+def RHS_Smagorinsky(main):
+    N = (size(main.uhat) - 1)*2
+    ## Compute basic RHS on a padded grid
+    uhat_pad = pad_r(main.uhat,1)
+    kf = linspace(0,size(uhat_pad)-1,size(uhat_pad))
+    dudxreal = myifft(1j*kf*uhat_pad)*sqrt(N)*2.
+    nut_real = (main.Cs*main.Delta)**2*abs(dudxreal)
+    tausgs_real = -nut_real*dudxreal
+    main.tauhat[:] = unpad_r(myfft(tausgs_real)/(2.*sqrt(N) ),1)
+
+    ureal = myifft(uhat_pad)*2*np.sqrt(size(main.uhat))
+    c = unpad_r(myfft(ureal*ureal)/(2*np.sqrt(size(main.uhat))),1)
+    main.RHS = -0.5*1j*main.k*c - main.nu*main.k**2*main.uhat - 1j*main.k*main.tauhat
+    main.u = myifft(main.uhat)*sqrt(N)
+
