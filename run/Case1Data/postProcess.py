@@ -1,0 +1,48 @@
+from pylab import *
+close("all")
+DNS = load('DNSstats2.npz')
+ILES = load('ILES.npz')
+tmodel = load('tmodelstats.npz')
+#FM1 = load('FM1stats.npz')
+FM1 = load('../FM1/Solution/stats.npz')
+FM2 = load('FM2stats.npz')
+FM3 = load('FM3stats.npz')
+CM3 = load('CM3stats.npz')
+
+DNSscale =  sqrt( 1./ size(DNS['u'][:,0])  )
+LESscale =  sqrt( 1./ size(tmodel['u'][:,0])  )
+figure(1)
+kc = int( amax(tmodel['k']))
+plot(DNS['t'],mean(abs(DNS['tauhat'][0:kc,:])*DNSscale,axis=0),label='DNS') 
+plot(ILES['t'],mean(abs(ILES['tauhat'][0:kc,:])*LESscale,axis=0),label='NO SGS') 
+plot(tmodel['t'],mean(abs(tmodel['tauhat'][0:kc,:])*LESscale,axis=0),label='t-model')
+plot(FM1['t'],mean(abs(FM1['tauhat'][0:kc,:])*LESscale,axis=0),label='FM1')
+plot(FM2['t'],mean(abs(FM2['tauhat'][0:kc,:])*LESscale,axis=0),label='FM2')
+plot(FM3['t'],mean(abs(FM3['tauhat'][0:kc,:])*LESscale,axis=0),label='FM3')
+legend(loc=1)
+
+figure(2)
+plot(DNS['tf'],   DNS['Energy_resolved']*DNSscale**2,'s',mfc='none',label='DNS') 
+plot(ILES['tf'], ILES['Energy_resolved']*LESscale**2,label='NO SGS') 
+plot(tmodel['t'],0.5*sum(tmodel['uhat'][0:kc,:]*conj(tmodel['uhat'][0:kc,:])*LESscale**2,axis=0),label='t-model')
+plot(FM1['t'],   0.5*sum(FM1['uhat'][0:kc,:]*conj(FM1['uhat'][0:kc,:])*LESscale**2,axis=0),label='FM1')
+plot(FM2['t'],   0.5*sum(FM2['uhat'][0:kc,:]*conj(FM2['uhat'][0:kc,:])*LESscale**2,axis=0),label='FM2')
+plot(FM3['t'],   0.5*sum(FM3['uhat'][0:kc,:]*conj(FM3['uhat'][0:kc,:])*LESscale**2,axis=0),label='FM3')
+plot(CM3['tf'],   CM3['Energy']*LESscale**2,label='CM3')
+
+legend(loc=1)
+
+figure(3)
+plot(DNS['tf'],-DNS['Dissipation_resolved']*DNSscale**2,'s',mfc='none',label='DNS') 
+plot(ILES['tf'],-ILES['Dissipation_resolved']*LESscale**2,label='NO SGS') 
+plot(tmodel['tf'],-tmodel['Dissipation']*LESscale**2,label='tmodel')
+plot(FM1['tf'],-FM1['Dissipation']*LESscale**2,label='FM1')
+plot(FM2['tf'],-FM2['Dissipation']*LESscale**2,label='FM2')
+plot(FM3['tf'],-FM3['Dissipation_resolved']*LESscale**2,label='FM3')
+plot(CM3['tf'],-CM3['Dissipation_resolved']*LESscale**2,label='CM3')
+ylim([0,1])
+legend(loc=1)
+
+show()
+
+

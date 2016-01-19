@@ -21,6 +21,6 @@ t = 0
 dt = 1e-3 
 et =2  
 nu = 1e-2
-live_plot = 0
+live_plot = 1
 
 execfile('../../src/burgersDriver.py')

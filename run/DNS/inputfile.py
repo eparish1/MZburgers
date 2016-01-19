@@ -6,7 +6,7 @@ import numpy as np
 from utilities import *
 turb_model =0
 N = 2048
-kc = 16
+kc = 15
 dx = 2*pi/N
 x = linspace(0,2*pi-dx,N)
 k = linspace(0,N/2,N/2+1)
