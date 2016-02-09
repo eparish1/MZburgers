@@ -7,12 +7,35 @@ def RHS_DNS(main):
     N = (size(main.uhat) - 1)*2
     #scale = np.sqrt( (2.)*np.sqrt(size(main.uhat)) )
     uhat_pad = pad_r(main.uhat,1)
-    ureal = myifft(uhat_pad)*2*np.sqrt(size(main.uhat))
-    c = unpad_r(myfft(ureal*ureal)/(2*np.sqrt(size(main.uhat))),1)
+    ureal = myifft(uhat_pad)*(3./2.*sqrt(main.N))
+    c = unpad_r(myfft(ureal*ureal)/ (3./2.*sqrt(main.N) ),1)
     main.RHS = -0.5*1j*main.k*c - main.nu*main.k**2*main.uhat
-    main.tauhat = main.computeSGS(main.uhat,main.kc)
+    main.w = main.computeW(main.uhat,main.kc)
     main.u = myifft(main.uhat)*sqrt(N)
- 
+
+def RHS_DNS_BUDGETS(main):
+    N = (size(main.uhat) - 1)*2
+    #scale = np.sqrt( (2.)*np.sqrt(size(main.uhat)) )
+    uhat_pad = pad_r(main.uhat,1)
+    ureal = myifft(uhat_pad)*(3./2.*np.sqrt(main.N))
+    c = unpad_r(myfft(ureal*ureal)/(3./2.*np.sqrt(main.N)),1)
+    main.RHS = -0.5*1j*main.k*c - main.nu*main.k**2*main.uhat
+    main.w = main.computeW(main.uhat,main.kc)
+    main.u = myifft(main.uhat)*sqrt(N)
+
+
+    uhat_F,uhat_G = splitModes(main.uhat,main.kc)
+    uhat_F_pad = pad_r(uhat_F,1)
+    u_F_real = myifft(uhat_F_pad)*3./2.*sqrt(N)
+    cF = unpad_r(myfft(u_F_real*u_F_real)/(3./2.*np.sqrt(main.N)),1)
+    PLu_FUG = -0.5*1j*main.k*cF - main.nu*main.k**2*uhat_F
+    PLu_F,PLu_G = splitModes(PLu_FUG,main.kc)
+    PLu_G_pad = pad_r(PLu_G,1)
+    PLu_G_real = myifft(PLu_G_pad)*3./2.*sqrt(N)
+    #PLu_G[main.kc*2::] = 0
+    uhat_x_PLu_G = unpad_r( myfft(u_F_real*PLu_G_real)/(3./2.*sqrt(N)),1)
+    main.PLQLu = 2.*-1j*main.k/2.*uhat_x_PLu_G 
+
 
 def splitModes(u_FUG,kc):
     u_G = zeros(size(u_FUG),dtype='complex')
@@ -39,11 +62,11 @@ def RHS_tmodel(main):
     PLu_G_real = myifft(PLu_G)*sqrt(N)*2
     uhat_x_PLu_G = unpad_2xr(myfft(ureal*PLu_G_real)/(2.*sqrt(N)),1)
     ## t-model w/ 0.35 scaling
-    PLQLu_F = 0.35* 2.*-1j*main.k/2.*uhat_x_PLu_G
-    main.RHS = unpad_2xr(PLu_F,1) + main.t*PLQLu_F
-    main.tauhat = main.t*PLQLu_F/(-1j*main.k + 1e-30)
+    main.PLQLu =  2.*-1j*main.k/2.*uhat_x_PLu_G
+    main.RHS = unpad_2xr(PLu_F,1) + main.t*main.PLQLu
+    main.w = main.t*main.PLQLu
     main.u[:] = myifft(main.uhat)*sqrt(N)
-
+    
 def RHS_FM1(main):
     N = (size(main.uhat) - 1)*2
     ## Compute basic RHS on a padded grid
@@ -64,9 +87,9 @@ def RHS_FM1(main):
  
     main.RHS[0::2] = unpad_2xr(PLu_F,1) + main.w0hat[:]
     main.RHS[1::2] = -2./main.dt0*main.w0hat[:] + 2.*unpad_2xr(PLQLu_FUG,1)
-    main.tauhat[:] = main.w0hat[:]/(-1j*main.k + 1e-30)
+    main.w[:] = main.w0hat[:]
     main.u[:] = myifft(main.uhat)*sqrt(N)
-
+    main.PLQLu = unpad_2xr(PLQLu_FUG,1)
 
 def RHS_FM2(main):
     N = (size(main.uhat) - 1)*2
@@ -102,7 +125,7 @@ def RHS_FM2(main):
     main.RHS[0::3] = unpad_2xr(PLu_F,1) + main.w0hat[:]
     main.RHS[1::3] = -2./main.dt0*main.w0hat[:] + 2.*unpad_2xr(PLQLu_F,1) + main.w1hat[:]
     main.RHS[2::3] = -2./main.dt1*main.w1hat[:] + 2.*unpad_2xr(PLQLQLu_FUG,1)
-    main.tauhat[:] = main.w0hat[:]/(-1j*main.k + 1e-30)
+    main.w[:] = main.w0hat[:]
     main.u[:] = myifft(main.uhat)*sqrt(N)
 
 def RHS_FM3(main):
@@ -163,7 +186,7 @@ def RHS_FM3(main):
     main.RHS[2::4] = -2./main.dt1*main.w1hat[:] + 2.*unpad_2xr(PLQLQLu_FUG,1) + main.w2hat[:]
     main.RHS[3::4] = -2./main.dt2*main.w2hat[:] + 2.*unpad_2xr(PLQLQLQLu_FUG,1)
 
-    main.tauhat[:] = main.w0hat[:]/(-1j*main.k + 1e-30)
+    main.w[:] = main.w[:]
     main.u[:] = myifft(main.uhat)*sqrt(N)
 
 
@@ -224,7 +247,7 @@ def RHS_CM3(main):
     main.RHS[2::4] = unpad_2xr(PLQLQLu_FUG,1) + main.w2hat[:]
     main.RHS[3::4] = unpad_2xr(PLQLQLQLu_FUG,1)
 
-    main.tauhat[:] = main.w0hat[:]/(-1j*main.k + 1e-30)
+    main.w[:] = main.w0hat[:]
     main.u[:] = myifft(main.uhat)*sqrt(N)
 
 
@@ -233,13 +256,13 @@ def RHS_Smagorinsky(main):
     ## Compute basic RHS on a padded grid
     uhat_pad = pad_r(main.uhat,1)
     kf = linspace(0,size(uhat_pad)-1,size(uhat_pad))
-    dudxreal = myifft(1j*kf*uhat_pad)*sqrt(N)*2.
+    dudxreal = myifft(1j*kf*uhat_pad)*3./2.*sqrt(N)
     nut_real = (main.Cs*main.Delta)**2*abs(dudxreal)
     tausgs_real = -nut_real*dudxreal
-    main.tauhat[:] = unpad_r(myfft(tausgs_real)/(2.*sqrt(N) ),1)
+    main.w[:] = -1j*main.k*unpad_r(myfft(tausgs_real)/(3./2.*sqrt(N) ),1)
 
-    ureal = myifft(uhat_pad)*2*np.sqrt(size(main.uhat))
-    c = unpad_r(myfft(ureal*ureal)/(2*np.sqrt(size(main.uhat))),1)
-    main.RHS = -0.5*1j*main.k*c - main.nu*main.k**2*main.uhat - 1j*main.k*main.tauhat
+    ureal = myifft(uhat_pad)*3./2.*np.sqrt(size(main.uhat))
+    c = unpad_r(myfft(ureal*ureal)/(3./2.*np.sqrt(size(main.uhat))),1)
+    main.RHS = -0.5*1j*main.k*c - main.nu*main.k**2*main.uhat + main.w[:]
     main.u = myifft(main.uhat)*sqrt(N)
 
